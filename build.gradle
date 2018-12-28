@@ -1,0 +1,30 @@
+allprojects {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://jitpack.io" }        
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'application'
+
+if (!hasProperty('mainClass')) {
+	mainClassName = 'com.jme3.recast4j.Recast.RecastTest'
+}
+
+ext.jmeVersion = "[3.2,)"
+
+dependencies {
+    // Engine
+
+    implementation "org.jmonkeyengine:jme3-core:$jmeVersion"
+    
+    // recast4j
+    implementation 'com.github.ppiastucki.recast4j:parent:master-SNAPSHOT'
+    implementation 'com.github.ppiastucki.recast4j:detour-tile-cache:master-SNAPSHOT'
+    implementation 'com.github.ppiastucki.recast4j:detour-crowd:master-SNAPSHOT'
+    implementation 'com.github.ppiastucki.recast4j:detour-extras:master-SNAPSHOT'
+    implementation 'com.github.ppiastucki.recast4j:recast:master-SNAPSHOT'
+    implementation 'com.github.ppiastucki.recast4j:detour:master-SNAPSHOT'
+}
