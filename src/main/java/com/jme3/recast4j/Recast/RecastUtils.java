@@ -53,14 +53,14 @@ public class RecastUtils {
     }
 
     public static Mesh getDebugMesh(PolyDetail dmesh, float[] detailVerts, int[] detailTris) {
-        FloatBuffer vertices = BufferUtils.createVector3Buffer(detailVerts.length);
-        IntBuffer indexBuffer = BufferUtils.createIntBuffer(detailTris.length);
+        FloatBuffer vertices = BufferUtils.createFloatBuffer(dmesh.vertCount);
+        IntBuffer indexBuffer = BufferUtils.createIntBuffer(dmesh.triCount);
 
-        for (int i = 0; i < detailTris.length; ++i) {
+        for (int i = dmesh.triBase; i < dmesh.triBase + dmesh.triCount; ++i) {
             indexBuffer.put(detailTris[i]);
         }
 
-        for (int i = 0; i < detailVerts.length; ++i) {
+        for (int i = dmesh.vertBase; i < dmesh.vertBase + dmesh.vertCount; ++i) {
             vertices.put(detailVerts[i]);
         }
 
