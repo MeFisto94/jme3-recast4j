@@ -63,11 +63,45 @@ public class RecastBuilderConfigBuilder {
         maxBounds = bb.getMax(null);
     }
 
+    /**
+     * Warning, this Constructor doesn't support scaling, so ensure your Geometry has a scale of 1 OR call the appropriate
+     * constructor.
+     *
+     * @param m The Mesh
+     * @see #RecastBuilderConfigBuilder(Geometry)
+     * @see #RecastBuilderConfigBuilder(Node)
+     * @see #RecastBuilderConfigBuilder(Mesh, Vector3f)
+     *
+     */
     public RecastBuilderConfigBuilder(Mesh m) {
         this();
         fromBoundingVolume(m.getBound());
     }
 
+    /**
+     * Construct a Builder for RecastBuilderConfigs
+     * @param m The Mesh
+     * @param worldScale The World Scale
+     */
+    public RecastBuilderConfigBuilder(Mesh m, Vector3f worldScale) {
+        this(m);
+        // This should work... :D
+        minBounds.multLocal(worldScale);
+        maxBounds.multLocal(worldScale);
+    }
+
+    /**
+     * Construct a Builder for RecastBuilderConfigs
+     * @param g The Geometry
+     */
+    public RecastBuilderConfigBuilder(Geometry g) {
+        this(g.getMesh(), g.getWorldScale());
+    }
+
+    /**
+     * Construct a Builder for RecastBuilderConfigs.
+     * @param n The Node which is relevant for the Bounding Volume
+     */
     public RecastBuilderConfigBuilder(Node n) {
         this();
         fromBoundingVolume(n.getWorldBound());
