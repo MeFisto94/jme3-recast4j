@@ -79,7 +79,7 @@ public class RecastUtils {
 
     /**
      * Builds a Debug Mesh out of the Poly Data passed to this.
-     * ?? Warning: This requires a max vert per poly setting of 3, if you don't respect it, the debug mesh won't work.
+     * Warning: This requires a max vert per poly setting of 3, if you don't respect it, the debug mesh won't work.
      * @param meshData The mesh data containing the polygons
      * @return
      */
@@ -88,6 +88,10 @@ public class RecastUtils {
 
         int sumIndices = 0;
         for (Poly p: meshData.polys) {
+            if (p.verts.length != 3) {
+                throw new IllegalArgumentException("Error: Cannot display a polygon mesh, Triangle Mesh required. "
+                + "Please ensure that the vertsPerPoly setting in the RecastConfig is set to 3");
+            } // @TODO: Delaunay Traingulation, if you're brave enough.
             sumIndices += p.verts.length;
         }
 
