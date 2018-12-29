@@ -23,7 +23,6 @@
 
 package com.jme3.recast4j.Recast;
 
-import com.jme3.math.Vector3f;
 import com.jme3.scene.*;
 import com.jme3.util.BufferUtils;
 import jme3tools.optimize.GeometryBatchFactory;
@@ -41,6 +40,7 @@ import java.util.List;
  * thread
  */
 public class GeometryProviderBuilder {
+
     List<Geometry> geometryList;
     Mesh m;
 
@@ -49,8 +49,6 @@ public class GeometryProviderBuilder {
     }
 
     protected static List<Geometry> findGeometries(Node node, List<Geometry> geoms) {
-
-        // @TODO: Add a interface "spatial filter"
         for (Spatial spatial : node.getChildren()) {
             if (spatial.getUserData("no_collission") != null) {
                 continue; // Leave out Non-Collission
@@ -84,15 +82,12 @@ public class GeometryProviderBuilder {
         this(new Geometry("", m));
     }
 
-    protected List<Float> getVertices(Mesh mesh, Vector3f scale) {
+    protected List<Float> getVertices(Mesh mesh) {
         FloatBuffer buffer = mesh.getFloatBuffer(VertexBuffer.Type.Position);
         float[] vertexArray = BufferUtils.getFloatArray(buffer);
         List<Float> vertexList = new ArrayList<>(vertexArray.length);
-        for (int i = 0; i < vertexArray.length / 3; ++i) {
-            // since we scale to the center (which is 0), just multiply
-            vertexList.add(vertexArray[3 * i] * scale.x);
-            vertexList.add(vertexArray[3 * i + 1] * scale.y);
-            vertexList.add(vertexArray[3 * i + 2] * scale.z);
+        for (float vertex: vertexArray) {
+            vertexList.add(vertex);
         }
         return vertexList;
     }
@@ -107,16 +102,13 @@ public class GeometryProviderBuilder {
             triangles[3 * i + 1] = indices[1];
             triangles[3 * i + 2] = indices[2];
         }
-        // Independent copy so Arrays.asList is garbage collected
+        //Independent copy so Arrays.asList is garbage collected
         return new ArrayList<>(Arrays.asList(triangles));
     }
 
     public InputGeomProvider build() {
         m = new Mesh();
-        // @TODO: BIG TODO!! Maybe we need to remove the GeometryBatchFactory, as it doesn't seem to take scaling into
-        // account, which means we need to manually call getVertices on every sub mesh and then just copy the lists together
-        // but that doesn't work nicely
         GeometryBatchFactory.mergeGeometries(geometryList, m);
-        return new SimpleInputGeomProvider(getVertices(m, geometryList.get(0).getWorldScale()), getIndices(m));
+        return new SimpleInputGeomProvider(getVertices(m), getIndices(m));
     }
 }
