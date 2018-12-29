@@ -49,7 +49,7 @@ public class RecastTest {
         RecastBuilder.RecastBuilderResult rbr = rb.build(gpb.build(), bcfg);
 
         MeshData meshData = NavMeshBuilder.createNavMeshData(new NavMeshDataCreateParamsBuilder(rbr).build(bcfg));
-        NavMesh navMesh = new NavMesh(meshData, 0, 0);
+        NavMesh navMesh = new NavMesh(meshData, bcfg.cfg.maxVertsPerPoly, 0);
         try {
             saveToFile(meshData);
             saveToFile(navMesh);
