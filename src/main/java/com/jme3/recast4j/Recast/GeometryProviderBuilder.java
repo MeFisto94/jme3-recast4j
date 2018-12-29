@@ -33,6 +33,8 @@ import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * This class will build a GeometryProvider for Recast to work with.<br />
@@ -48,23 +50,37 @@ public class GeometryProviderBuilder {
         this.geometryList = geometryList;
     }
 
-    protected static List<Geometry> findGeometries(Node node, List<Geometry> geoms) {
-        for (Spatial spatial : node.getChildren()) {
-            if (spatial.getUserData("no_collission") != null) {
-                continue; // Leave out Non-Collission
+    protected static List<Geometry> findGeometries(Node node, List<Geometry> geoms, Predicate<Spatial> filter) {
+        for (Spatial spatial: node.getChildren()) {
+            if (!filter.test(spatial)) {
+                continue;
             }
 
             if (spatial instanceof Geometry) {
                 geoms.add((Geometry) spatial);
             } else if (spatial instanceof Node) {
-                findGeometries((Node) spatial, geoms);
+                findGeometries((Node) spatial, geoms, filter);
             }
         }
         return geoms;
     }
 
+    /**
+     * Provides this Node to the Builder and performs a search through the SceneGraph to gather all Geometries
+     * @param n The Node to use
+     * @param filter A Filter (analogue to the Java 8 Stream API) which defines when a Spatial should be gathered
+     */
+    public GeometryProviderBuilder(Node n, Predicate<Spatial> filter) {
+        this(findGeometries(n, new ArrayList<>(), filter));
+    }
+
+    /**
+     * Provides this Node to the Builder and performs a search through the SceneGraph to gather all Geometries<br />
+     * This uses the default filter: If userData "no_collission" is set, ignore this spatial
+     * @param n The Node to use
+     */
     public GeometryProviderBuilder(Node n) {
-        this(findGeometries(n, new ArrayList<>()));
+        this(n, spatial -> spatial.getUserData("no_collission") == null);
     }
 
     // bypass java's "this only in line 1" limitation
@@ -74,12 +90,23 @@ public class GeometryProviderBuilder {
         return geo;
     }
 
+    /**
+     * Provides this Geometry to the Builder
+     * @param g The Geometry to use
+     */
     public GeometryProviderBuilder(Geometry g) {
         this(newAndAdd(g));
     }
 
+    /**
+     * Provide this Mesh to the Builder.
+     * <b>Note: </b>Mesh does not contain trans, rot, scale information, so we suggest to use other constructors instead
+     * @see #GeometryProviderBuilder(Geometry)
+     * @see #GeometryProviderBuilder(Node, Predicate)
+     * @param m The Mesh to use
+     */
     public GeometryProviderBuilder(Mesh m) {
-        this(new Geometry("", m));
+        this.m = m;
     }
 
     protected List<Float> getVertices(Mesh mesh) {
@@ -107,8 +134,11 @@ public class GeometryProviderBuilder {
     }
 
     public InputGeomProvider build() {
-        m = new Mesh();
-        GeometryBatchFactory.mergeGeometries(geometryList, m);
+        if (m == null) {
+            m = new Mesh();
+            GeometryBatchFactory.mergeGeometries(geometryList, m);
+        }
+
         return new SimpleInputGeomProvider(getVertices(m), getIndices(m));
     }
 }
