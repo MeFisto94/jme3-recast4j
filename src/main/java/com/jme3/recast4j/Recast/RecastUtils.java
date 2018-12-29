@@ -27,6 +27,8 @@ import com.jme3.scene.Mesh;
 import com.jme3.scene.VertexBuffer;
 import com.jme3.util.BufferUtils;
 import jme3tools.optimize.GeometryBatchFactory;
+import org.recast4j.detour.MeshData;
+import org.recast4j.detour.Poly;
 import org.recast4j.detour.PolyDetail;
 
 import java.nio.FloatBuffer;
@@ -68,6 +70,34 @@ public class RecastUtils {
             vertices.put(detailVerts[3 * (dmesh.vertBase + i) + 2]);
         }
 
+        Mesh mesh = new Mesh();
+        mesh.setBuffer(VertexBuffer.Type.Position, 3, vertices);
+        mesh.setBuffer(VertexBuffer.Type.Index, 3, indexBuffer);
+        mesh.updateBound();
+        return mesh;
+    }
+
+    /**
+     * Builds a Debug Mesh out of the Poly Data passed to this.
+     * ?? Warning: This requires a max vert per poly setting of 3, if you don't respect it, the debug mesh won't work.
+     * @param meshData The mesh data containing the polygons
+     * @return
+     */
+    public static Mesh getDebugMesh(MeshData meshData) {
+        FloatBuffer vertices = BufferUtils.createFloatBuffer(meshData.verts);
+
+        int sumIndices = 0;
+        for (Poly p: meshData.polys) {
+            sumIndices += p.verts.length;
+        }
+
+        IntBuffer indexBuffer = BufferUtils.createIntBuffer(sumIndices);
+
+        for (Poly p: meshData.polys) {
+            for (int idx: p.verts) {
+                indexBuffer.put(idx);
+            }
+        }
         Mesh mesh = new Mesh();
         mesh.setBuffer(VertexBuffer.Type.Position, 3, vertices);
         mesh.setBuffer(VertexBuffer.Type.Index, 3, indexBuffer);
