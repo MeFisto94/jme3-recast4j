@@ -36,14 +36,61 @@ public class NavMeshDataCreateParamsBuilder {
         m_dmesh = result.getMeshDetail();
     }
 
-    public NavMeshDataCreateParamsBuilder withPolyFlag(int id, int flag) {
-        m_pmesh.flags[id] = flag;
+    /**
+     * Sets the flags attribute for a specific polygon. This is later used in detour to filter whether you want to use
+     * a certain polygon or not. It's a fast way to filter polygons on demand (e.g. in a boss battle, bridges become locked).
+     *
+     * @see #withPolyFlag(int, int) for setting individual flags instead of manually composing the flags attribute already
+     * @see #withPolyFlagsAll(int) for setting flags for all polygons
+     * @param id The Polygonal Id, good luck at finding this
+     * @param flags The Flags to set
+     * @return this
+     */
+    public NavMeshDataCreateParamsBuilder withPolyFlags(int id, int flags) {
+        m_pmesh.flags[id] = flags;
         return this;
     }
 
+    /**
+     * Sets a flag attribute for a specific polygon. This is later used in detour to filter whether you want to use a
+     * certain polygon or not. It's a fast way to filter polygons on demand (e.g. in a boss battle, bridges become locked)
+     * @param id The Polygonal Id, good luck at finding this
+     * @param flag The Flag to set
+     * @return this
+     */
+    public NavMeshDataCreateParamsBuilder withPolyFlag(int id, int flag) {
+        m_pmesh.flags[id] |= flag;
+        return this;
+    }
+
+    /**
+     * Sets the flags attribute for all polygons. This is later used in detour to filter whether you want to use
+     * a certain polygon or not. It's a fast way to filter polygons on demand (e.g. in a boss battle, bridges become locked).
+     *
+     * @see #withPolyFlagAll(int) for setting individual flags instead of manually composing the flags attribute already
+     * @see #withPolyFlagsAll(int) for setting flags for individual polygon
+     * @param flags The Flags to set
+     * @return this
+     */
+    public NavMeshDataCreateParamsBuilder withPolyFlagsAll(int flags) {
+        for (int i = 0; i < m_pmesh.npolys; ++i) {
+            m_pmesh.flags[i] = flags;
+        }
+        return this;
+    }
+
+    /**
+     * Sets the flags attribute for all polygons. This is later used in detour to filter whether you want to use
+     * a certain polygon or not. It's a fast way to filter polygons on demand (e.g. in a boss battle, bridges become locked).
+     *
+     * @see #withPolyFlags(int, int) for setting flags for individual polygon
+     * @see #withPolyFlagAll(int) for setting individual flags instead of manually composing the flags attribute already
+     * @param flag The Flag to set
+     * @return this
+     */
     public NavMeshDataCreateParamsBuilder withPolyFlagAll(int flag) {
         for (int i = 0; i < m_pmesh.npolys; ++i) {
-            m_pmesh.flags[i] = flag;
+            m_pmesh.flags[i] |= flag;
         }
         return this;
     }
