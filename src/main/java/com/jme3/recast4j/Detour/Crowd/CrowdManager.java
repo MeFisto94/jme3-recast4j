@@ -8,7 +8,7 @@ public class CrowdManager {
     ArrayList<Crowd> crowdList;
 
     public CrowdManager() {
-        crowdList = new ArrayList();
+        crowdList = new ArrayList<>();
     }
 
     public void update(float timePassed) {
