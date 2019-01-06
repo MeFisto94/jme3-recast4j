@@ -28,6 +28,7 @@ import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
+import com.jme3.scene.Spatial;
 import org.recast4j.recast.RecastBuilder;
 import org.recast4j.recast.RecastBuilderConfig;
 import org.recast4j.recast.RecastConfig;
@@ -105,6 +106,18 @@ public class RecastBuilderConfigBuilder {
     public RecastBuilderConfigBuilder(Node n) {
         this();
         fromBoundingVolume(n.getWorldBound());
+    }
+
+    public RecastBuilderConfigBuilder(Spatial s) {
+        this();
+        if (s instanceof Node) {
+            fromBoundingVolume(((Node)s).getWorldBound());
+        } else if (s instanceof Geometry) {
+            fromBoundingVolume(((Geometry) s).getMesh().getBound());
+            Vector3f worldScale = s.getWorldScale();
+            minBounds.multLocal(worldScale);
+            maxBounds.multLocal(worldScale);
+        }
     }
 
     public RecastBuilderConfigBuilder withTileX(int tileX) {
