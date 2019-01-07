@@ -1,15 +1,18 @@
 package com.jme3.recast4j.Detour.Crowd;
 
 import java.util.ArrayList;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
 public class CrowdManager {
     CrowdUpdateType updateType;
     ArrayList<Crowd> crowdList;
+    ReentrantLock lock;
 
     public CrowdManager() {
         updateType = CrowdUpdateType.SEQUENTIAL;
         crowdList = new ArrayList<>();
+        lock = new ReentrantLock();
     }
 
     public void setUpdateType(CrowdUpdateType updateType) {
@@ -17,38 +20,66 @@ public class CrowdManager {
     }
 
     public void addCrowd(Crowd c) {
-        crowdList.add(c);
+        try {
+            lock.lock();
+            crowdList.add(c);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void removeCrowd(Crowd c) {
-        crowdList.remove(c);
+        try {
+            lock.lock();
+            crowdList.remove(c);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public Crowd getCrowd(int idx) {
-        return crowdList.get(idx);
+        try {
+            lock.lock();
+            return crowdList.get(idx);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public int getNumberOfCrowds() {
-        return crowdList.size();
+        try {
+            lock.lock();
+            return crowdList.size();
+        } finally {
+            lock.unlock();
+        }
+
     }
 
     public void update(float timePassed) {
-        Stream<Crowd> stream;
+        try {
+            // Danger here is that someone is blocking the lock and never releasing, freezing a whole application
+            lock.lock();
 
-        switch (updateType) {
-            case SEQUENTIAL:
-                stream = crowdList.stream();
-                break;
+            Stream<Crowd> stream;
 
-            case PARALLEL:
-                stream = crowdList.parallelStream();
-                break;
+            switch (updateType) {
+                case SEQUENTIAL:
+                    stream = crowdList.stream();
+                    break;
 
-            default:
-                throw new IllegalArgumentException("Unknown Update Type");
+                case PARALLEL:
+                    stream = crowdList.parallelStream();
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unknown Update Type");
+            }
+
+            stream.forEach(c -> c.update(timePassed));
+        } finally {
+            lock.unlock();
         }
-
-        stream.forEach(c -> c.update(timePassed));
     }
 
 }
