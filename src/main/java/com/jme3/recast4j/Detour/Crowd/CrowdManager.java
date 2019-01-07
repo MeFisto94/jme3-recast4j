@@ -8,7 +8,28 @@ public class CrowdManager {
     ArrayList<Crowd> crowdList;
 
     public CrowdManager() {
+        updateType = CrowdUpdateType.SEQUENTIAL;
         crowdList = new ArrayList<>();
+    }
+
+    public void setUpdateType(CrowdUpdateType updateType) {
+        this.updateType = updateType;
+    }
+
+    public void addCrowd(Crowd c) {
+        crowdList.add(c);
+    }
+
+    public void removeCrowd(Crowd c) {
+        crowdList.remove(c);
+    }
+
+    public Crowd getCrowd(int idx) {
+        return crowdList.get(idx);
+    }
+
+    public int getNumberOfCrowds() {
+        return crowdList.size();
     }
 
     public void update(float timePassed) {
