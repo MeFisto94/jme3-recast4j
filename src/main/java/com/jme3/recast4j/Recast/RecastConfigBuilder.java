@@ -29,22 +29,29 @@ import org.recast4j.recast.RecastConstants;
 
 public class RecastConfigBuilder {
 
-    RecastConstants.PartitionType partitionType;
-    float cellSize;
-    float cellHeight;
-    float agentHeight;
-    float agentRadius;
-    float agentMaxClimb;
-    float agentMaxSlope;
-    int regionMinSize;
-    int regionMergeSize;
-    float edgeMaxLen;
-    float edgeMaxError;
-    int vertsPerPoly;
-    float detailSampleDist;
-    float detailSampleMaxError;
-    int tileSize;
-    AreaModification walkableAreaMod;
+    protected RecastConstants.PartitionType partitionType;
+    protected float cellSize;
+    protected float cellHeight;
+    protected float agentHeight;
+    protected float agentRadius;
+    protected float agentMaxClimb;
+    protected float agentMaxSlope;
+    protected int regionMinSize;
+    protected int regionMergeSize;
+    protected float edgeMaxLen;
+    protected float edgeMaxError;
+    protected int vertsPerPoly;
+    protected float detailSampleDist;
+    protected float detailSampleMaxError;
+    protected int tileSize;
+    protected AreaModification walkableAreaMod;
+
+    /*
+     * We have values which we can derive from others using a formula.
+     * When such a value is modified, we have to disable auto-deriveal or else
+     * we'll overwrite what the user is trying to do
+     */
+    boolean modifiedCalculatedValue = false;
 
     public RecastConfigBuilder(RecastConfigBuilder rcb) {
         this.partitionType = rcb.partitionType;
@@ -63,6 +70,7 @@ public class RecastConfigBuilder {
         this.detailSampleMaxError = rcb.detailSampleMaxError;
         this.tileSize = rcb.tileSize;
         this.walkableAreaMod = rcb.walkableAreaMod;
+        this.modifiedCalculatedValue = rcb.modifiedCalculatedValue;
     }
 
     public RecastConfigBuilder() {
@@ -116,6 +124,7 @@ public class RecastConfigBuilder {
      */
     public RecastConfigBuilder withCellSize(float cellSize) {
         this.cellSize = cellSize;
+        modifiedCalculatedValue = true;
         return this;
     }
 
@@ -127,6 +136,7 @@ public class RecastConfigBuilder {
      */
     public RecastConfigBuilder withCellHeight(float cellHeight) {
         this.cellHeight = cellHeight;
+        modifiedCalculatedValue = true;
         return this;
     }
 
@@ -163,6 +173,7 @@ public class RecastConfigBuilder {
 
     public RecastConfigBuilder withAgentMaxClimb(float agentMaxClimb) {
         this.agentMaxClimb = agentMaxClimb;
+        modifiedCalculatedValue = true;
         return this;
     }
 
@@ -207,6 +218,7 @@ public class RecastConfigBuilder {
      */
     public RecastConfigBuilder withEdgeMaxLen(float edgeMaxLen) {
         this.edgeMaxLen = edgeMaxLen;
+        modifiedCalculatedValue = true;
         return this;
     }
 
@@ -264,13 +276,53 @@ public class RecastConfigBuilder {
         return this;
     }
 
+    /**
+     * CellSize, CellHeight, AgentMaxClimb and EdgeMaxLength can be derived from
+     * some formulas. Calling this method will do that for you (and thus also
+     * overwrite the values manually set!)
+     *
+     * @return this
+     */
+    public RecastConfigBuilder deriveValues() {
+        cellSize = agentRadius / 2f; // r / 2
+        cellHeight = cellSize / 2f; // cs / 2
+        agentMaxClimb = 2f * cellHeight; // > 2 * ch
+        edgeMaxLen = 8f * agentRadius; // r*8
+        return this;
+    }
+
     public RecastConfigBuilder clone() {
         return new RecastConfigBuilder(this);
     }
 
-    public RecastConfig build() {
+
+    /**
+     * Build the RecastConfig Instance.<br>
+     * @param deriveValues Whether to derive some values from formulas by calling deriveValues for you.
+     * @see #deriveValues()
+     * @return
+     */
+    public RecastConfig build(boolean deriveValues) {
+        if (deriveValues) {
+            deriveValues();
+        }
+
         return new RecastConfig(partitionType, cellSize, cellHeight, agentHeight, agentRadius, agentMaxClimb, agentMaxSlope,
                 regionMinSize, regionMergeSize, edgeMaxLen, edgeMaxError, vertsPerPoly, detailSampleDist, detailSampleMaxError,
                 tileSize, walkableAreaMod);
+    }
+
+    /**
+     * Build the RecastConfig Instance.<br>
+     * Note: This will automatically calculate CellSize, CellHeight and others if you didn't set any of those.<br>
+     * If you do not want this behavior, use {@link #build(boolean)} with false.
+     * @return
+     */
+    public RecastConfig build() {
+        if (modifiedCalculatedValue) {
+            return build(false);
+        } else {
+            return build(true);
+        }
     }
 }
