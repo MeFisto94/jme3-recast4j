@@ -18,6 +18,7 @@ ext.jmeVersion = "[3.2,)"
 dependencies {
     // Engine
     implementation "org.jmonkeyengine:jme3-core:$jmeVersion"
+    implementation "org.jmonkeyengine:jme3-bullet:$jmeVersion"
     
     // recast4j
     implementation 'com.github.ppiastucki.recast4j:parent:master-SNAPSHOT'

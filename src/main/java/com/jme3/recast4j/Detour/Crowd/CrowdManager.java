@@ -60,7 +60,6 @@ public class CrowdManager {
         try {
             // Danger here is that someone is blocking the lock and never releasing, freezing a whole application
             lock.lock();
-
             Stream<Crowd> stream;
 
             switch (updateType) {
@@ -77,6 +76,7 @@ public class CrowdManager {
             }
 
             stream.forEach(c -> c.update(timePassed));
+            crowdList.stream().forEach(Crowd::applyMovements);
         } finally {
             lock.unlock();
         }
