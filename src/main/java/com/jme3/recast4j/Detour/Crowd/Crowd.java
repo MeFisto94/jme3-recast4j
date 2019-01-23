@@ -12,7 +12,6 @@ import org.recast4j.detour.crowd.CrowdAgent;
 import org.recast4j.detour.crowd.CrowdAgentParams;
 import org.recast4j.detour.crowd.debug.CrowdAgentDebugInfo;
 
-import java.util.HashMap;
 import java.util.function.IntFunction;
 
 /**
@@ -31,7 +30,8 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
         this(applicationType, maxAgents, maxAgentRadius, nav, i -> (i == 0 ? new BetterDefaultQueryFilter() : new DefaultQueryFilter()));
     }
 
-    public Crowd(MovementApplicationType applicationType, int maxAgents, float maxAgentRadius, NavMesh nav, IntFunction<QueryFilter> queryFilterFactory) {
+    public Crowd(MovementApplicationType applicationType, int maxAgents, float maxAgentRadius, NavMesh nav,
+                 IntFunction<QueryFilter> queryFilterFactory) {
         super(maxAgents, maxAgentRadius, nav, queryFilterFactory);
         this.applicationType = applicationType;
         spatialMap = new Spatial[maxAgents];
@@ -74,28 +74,39 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
         spatialMap[agent.idx] = spatial;
     }
 
+    /**
+     * Remove the Agent from this Crowd (Convenience Wrapper around {@link #removeAgent(int)})
+     * @param agent The Agent to remove from the crowd
+     */
     public void removeAgent(CrowdAgent agent) {
         if (agent.idx != -1) {
             removeAgent(agent.idx);
         }
     }
 
+    /**
+     * Makes the whole Crowd move to a target. Know that you can also move individual agents.
+     * @param to The Move Target
+     * @param polyRef The Polygon to which the target belongs
+     * @return Whether all agents could be scheduled to approach the target
+     */
     public boolean requestMoveToTarget(Vector3f to, long polyRef) {
         if (polyRef == 0 || to == null) {
             throw new IllegalArgumentException("Invalid Target (" + to + ", " + polyRef + ")");
         }
 
         // Unfortunately ag.setTarget is not an exposed API, maybe we'll write a dispatcher class if that bugs me too much
+        // Why? That way we could throw Exceptions when the index is wrong (IndexOutOfBoundsEx)
         return getActiveAgents().stream()
-            .map(ca -> requestMoveTarget(ca.idx, polyRef, DetourUtils.toFloatArray(to)))
-            .allMatch(b -> b); // if all were successful, return true, else return false.
+            .allMatch(ca -> requestMoveTarget(ca.idx, polyRef, DetourUtils.toFloatArray(to)));
+        // if all were successful, return true, else return false.
     }
 
     /**
      * This method is called by the CrowdManager to move the agents on the screen.
      */
     protected void applyMovements() {
-        getActiveAgents().stream().forEach(ca -> applyMovement(ca, DetourUtils.createVector3f(ca.npos),
+        getActiveAgents().forEach(ca -> applyMovement(ca, DetourUtils.createVector3f(ca.npos),
                 DetourUtils.createVector3f(ca.vel)));
     }
 
@@ -109,7 +120,11 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                 break;
 
             case DIRECT:
-                spatialMap[crowdAgent.idx].setLocalTranslation(newPos);
+                // Debug Code to handle "approaching behavior"
+                System.out.println("speed: " + velocity.length() + " newPos: " + newPos + " velocity: " + velocity);
+                if (velocity.length() > 0.1f) {
+                    spatialMap[crowdAgent.idx].setLocalTranslation(newPos);
+                }
                 break;
 
             case BETTER_CHARACTER_CONTROL:
@@ -121,5 +136,13 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
             default:
                 throw new IllegalArgumentException("Unknown Application Type");
         }
+    }
+
+    public void setApplicationType(MovementApplicationType applicationType) {
+        this.applicationType = applicationType;
+    }
+
+    public void setCustomApplyFunction(ApplyFunction applyFunction) {
+        this.applyFunction = applyFunction;
     }
 }
