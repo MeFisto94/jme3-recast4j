@@ -25,6 +25,8 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
     protected MovementApplicationType applicationType;
     protected ApplyFunction applyFunction;
     protected Spatial[] spatialMap;
+    protected TargetProximityDetector proximityDetector;
+    protected FormationHandler formationHandler;
 
     public Crowd(MovementApplicationType applicationType, int maxAgents, float maxAgentRadius, NavMesh nav) {
         this(applicationType, maxAgents, maxAgentRadius, nav, i -> (i == 0 ? new BetterDefaultQueryFilter() : new DefaultQueryFilter()));
@@ -35,6 +37,8 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
         super(maxAgents, maxAgentRadius, nav, queryFilterFactory);
         this.applicationType = applicationType;
         spatialMap = new Spatial[maxAgents];
+        proximityDetector = new SimpleTargetProximityDetector(1f);
+        formationHandler = new CircleFormationHandler(maxAgents, this);
     }
 
     public void update(float deltaTime) {
@@ -135,6 +139,11 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
 
             default:
                 throw new IllegalArgumentException("Unknown Application Type");
+        }
+
+        if (proximityDetector.isInTargetProximity(crowdAgent, newPos, crowdAgent.getTarget)) {
+            // Handle Crowd Agent in proximity.
+            crowdAgent.setTarget(null); // Make him stop moving.
         }
     }
 
