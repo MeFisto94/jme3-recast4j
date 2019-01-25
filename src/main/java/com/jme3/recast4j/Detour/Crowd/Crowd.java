@@ -5,14 +5,12 @@ import com.jme3.math.Vector3f;
 import com.jme3.recast4j.Detour.BetterDefaultQueryFilter;
 import com.jme3.recast4j.Detour.DetourUtils;
 import com.jme3.scene.Spatial;
-import org.recast4j.detour.DefaultQueryFilter;
-import org.recast4j.detour.FindNearestPolyResult;
-import org.recast4j.detour.NavMesh;
-import org.recast4j.detour.QueryFilter;
+import org.recast4j.detour.*;
 import org.recast4j.detour.crowd.CrowdAgent;
 import org.recast4j.detour.crowd.CrowdAgentParams;
 import org.recast4j.detour.crowd.debug.CrowdAgentDebugInfo;
 
+import java.lang.reflect.Field;
 import java.util.function.IntFunction;
 
 /**
@@ -28,18 +26,26 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
     protected Spatial[] spatialMap;
     protected TargetProximityDetector proximityDetector;
     protected FormationHandler formationHandler;
+    protected NavMeshQuery m_navquery;
 
-    public Crowd(MovementApplicationType applicationType, int maxAgents, float maxAgentRadius, NavMesh nav) {
-        this(applicationType, maxAgents, maxAgentRadius, nav, i -> (i == 0 ? new BetterDefaultQueryFilter() : new DefaultQueryFilter()));
+    public Crowd(MovementApplicationType applicationType, int maxAgents, float maxAgentRadius, NavMesh nav)
+            throws NoSuchFieldException, IllegalAccessException {
+        this(applicationType, maxAgents, maxAgentRadius, nav,
+                i -> (i == 0 ? new BetterDefaultQueryFilter() : new DefaultQueryFilter())
+        );
     }
 
     public Crowd(MovementApplicationType applicationType, int maxAgents, float maxAgentRadius, NavMesh nav,
-                 IntFunction<QueryFilter> queryFilterFactory) {
+                 IntFunction<QueryFilter> queryFilterFactory) throws NoSuchFieldException, IllegalAccessException {
         super(maxAgents, maxAgentRadius, nav, queryFilterFactory);
         this.applicationType = applicationType;
         spatialMap = new Spatial[maxAgents];
         proximityDetector = new SimpleTargetProximityDetector(1f);
         formationHandler = new CircleFormationHandler(maxAgents, this, 1f);
+
+        Field f = getClass().getSuperclass().getDeclaredField("m_navquery");
+        f.setAccessible(true);
+        m_navquery = (NavMeshQuery)f.get(this);
     }
 
     public void update(float deltaTime) {
