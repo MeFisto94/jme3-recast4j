@@ -6,6 +6,7 @@ import com.jme3.recast4j.Detour.BetterDefaultQueryFilter;
 import com.jme3.recast4j.Detour.DetourUtils;
 import com.jme3.scene.Spatial;
 import org.recast4j.detour.DefaultQueryFilter;
+import org.recast4j.detour.FindNearestPolyResult;
 import org.recast4j.detour.NavMesh;
 import org.recast4j.detour.QueryFilter;
 import org.recast4j.detour.crowd.CrowdAgent;
@@ -38,7 +39,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
         this.applicationType = applicationType;
         spatialMap = new Spatial[maxAgents];
         proximityDetector = new SimpleTargetProximityDetector(1f);
-        formationHandler = new CircleFormationHandler(maxAgents, this);
+        formationHandler = new CircleFormationHandler(maxAgents, this, 1f);
     }
 
     public void update(float deltaTime) {
@@ -99,6 +100,8 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
             throw new IllegalArgumentException("Invalid Target (" + to + ", " + polyRef + ")");
         }
 
+        formationHandler.setTargetPosition(to);
+
         // Unfortunately ag.setTarget is not an exposed API, maybe we'll write a dispatcher class if that bugs me too much
         // Why? That way we could throw Exceptions when the index is wrong (IndexOutOfBoundsEx)
         return getActiveAgents().stream()
@@ -141,9 +144,11 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                 throw new IllegalArgumentException("Unknown Application Type");
         }
 
-        if (proximityDetector.isInTargetProximity(crowdAgent, newPos, crowdAgent.getTarget)) {
+        if (proximityDetector.isInTargetProximity(crowdAgent, newPos, DetourUtils.createVector3f(crowdAgent.targetPos))) {
             // Handle Crowd Agent in proximity.
-            crowdAgent.setTarget(null); // Make him stop moving.
+            //crowdAgent.setTarget(null); // Make him stop moving.
+            resetMoveTarget(crowdAgent.idx);
+            formationHandler.moveIntoFormation(crowdAgent);
         }
     }
 
@@ -153,5 +158,34 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
 
     public void setCustomApplyFunction(ApplyFunction applyFunction) {
         this.applyFunction = applyFunction;
+    }
+
+    /**
+     * Moves a specified Agent to a Location.<br />
+     * This code implicitly searches for the correct polygon with a constant tolerance, in most cases you should prefer
+     * to determine the poly ref manually with domain specific knowledge.
+     * @see #requestMoveToTarget(CrowdAgent, long, Vector3f)
+     * @param crowdAgent the agent to move
+     * @param to where the agent shall move to
+     * @return whether this operation was successful
+     */
+    public boolean requestMoveToTarget(CrowdAgent crowdAgent, Vector3f to) {
+        FindNearestPolyResult res = m_navquery.findNearestPoly(DetourUtils.toFloatArray(to), new float[]{0.5f, 0.5f, 0.5f}, new BetterDefaultQueryFilter());
+        if (res.getNearestRef() != -1) {
+            return requestMoveToTarget(crowdAgent, res.getNearestRef(), to);
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Moves a specified Agent to a Location.
+     * @param crowdAgent the agent to move
+     * @param polyRef The Polygon where the position resides
+     * @param to where the agent shall move to
+     * @return whether this operation was successful
+     */
+    public boolean requestMoveToTarget(CrowdAgent crowdAgent, long polyRef, Vector3f to) {
+        return requestMoveTarget(crowdAgent.idx, polyRef, DetourUtils.toFloatArray(to));
     }
 }

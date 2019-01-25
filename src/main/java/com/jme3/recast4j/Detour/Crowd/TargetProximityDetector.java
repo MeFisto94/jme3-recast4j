@@ -1,6 +1,7 @@
 package com.jme3.recast4j.Detour.Crowd;
 
 import com.jme3.math.Vector3f;
+import org.recast4j.detour.crowd.CrowdAgent;
 
 /**
  * An interface to detect when an agent is in the acceptable range of a target. <br />

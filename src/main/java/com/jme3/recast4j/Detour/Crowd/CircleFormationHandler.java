@@ -3,6 +3,7 @@ package com.jme3.recast4j.Detour.Crowd;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
+import org.recast4j.detour.crowd.CrowdAgent;
 
 /**
  * The Circle Formation Handler moves CrowdAgents on a circle around the target in evenly spaced portions.<br />
@@ -14,11 +15,11 @@ public class CircleFormationHandler implements FormationHandler {
     protected int numAgents;
     protected Crowd crowd;
     protected Vector3f target;
-    protected Vector3f radius;
+    protected float radius;
     protected int filledSlotIdx;
     protected float angle;
 
-    public CircleFormationHandler(int maxAgents, Crowd crowd, Vector3f radius) {
+    public CircleFormationHandler(int maxAgents, Crowd crowd, float radius) {
         this.numAgents = maxAgents;
         this.crowd = crowd;
         this.radius = radius;
@@ -42,11 +43,15 @@ public class CircleFormationHandler implements FormationHandler {
         filledSlotIdx++;
         Quaternion q = new Quaternion();
         q.fromAngleAxis(angle * filledSlotIdx, Vector3f.UNIT_Y);
-        crowdAgent.setTarget(
+        boolean b = crowd.requestMoveToTarget(crowdAgent,
             target.add(
                 // Offset Vector: Rotate and scale to the radius
                 q.mult(Vector3f.UNIT_Z).mult(radius)
             )
         );
+
+        if (!b) {
+            // @TODO: Consider throwing an exception
+        }
     }
 }
