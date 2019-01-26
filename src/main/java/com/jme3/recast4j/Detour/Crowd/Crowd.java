@@ -27,6 +27,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
     protected TargetProximityDetector proximityDetector;
     protected FormationHandler formationHandler;
     protected NavMeshQuery m_navquery;
+    protected boolean[] formationInProgress;
 
     public Crowd(MovementApplicationType applicationType, int maxAgents, float maxAgentRadius, NavMesh nav)
             throws NoSuchFieldException, IllegalAccessException {
@@ -42,6 +43,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
         spatialMap = new Spatial[maxAgents];
         proximityDetector = new SimpleTargetProximityDetector(1f);
         formationHandler = new CircleFormationHandler(maxAgents, this, 1f);
+        formationInProgress = new boolean[maxAgents];
 
         Field f = getClass().getSuperclass().getDeclaredField("m_navquery");
         f.setAccessible(true);
@@ -134,7 +136,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
 
             case DIRECT:
                 // Debug Code to handle "approaching behavior"
-                System.out.println("speed: " + velocity.length() + " newPos: " + newPos + " velocity: " + velocity);
+                System.out.println("" + Boolean.toString(crowdAgent.targetRef != 0) + " speed: " + velocity.length() + " newPos: " + newPos + " velocity: " + velocity);
                 if (velocity.length() > 0.1f) {
                     spatialMap[crowdAgent.idx].setLocalTranslation(newPos);
                 }
@@ -150,11 +152,30 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                 throw new IllegalArgumentException("Unknown Application Type");
         }
 
-        if (proximityDetector.isInTargetProximity(crowdAgent, newPos, DetourUtils.createVector3f(crowdAgent.targetPos))) {
-            // Handle Crowd Agent in proximity.
-            //crowdAgent.setTarget(null); // Make him stop moving.
-            resetMoveTarget(crowdAgent.idx);
-            formationHandler.moveIntoFormation(crowdAgent);
+        // alternative: crowdAgent.targetPos != formationHandler.getTargetPosition(). But better not rely on these impls
+        // and what if formation's targetPosition might change?
+        if (!formationInProgress[crowdAgent.idx]) {
+            //@TODO: Instead of targetRef, expose targetState
+            if (crowdAgent.targetRef != 0 && proximityDetector.isInTargetProximity(crowdAgent, newPos, DetourUtils.createVector3f(crowdAgent.targetPos))) {
+                // Handle Crowd Agent in proximity.
+                resetMoveTarget(crowdAgent.idx); // Make him stop moving.
+                formationHandler.moveIntoFormation(crowdAgent);
+                formationInProgress[crowdAgent.idx] = true;
+            }
+        } else {
+            /*
+             @TODO: Two Problems: A) Using ProximityDetector which has game specific logic. Is that okay here? It could
+             be that a proximity detector only knows about possible targetPos and not what our formation tries to be?
+             Because for a Formation which might not want a complicated class but only a "if < 0.2, okay". The ProximityDetector
+             on the other hand is game specific (how close shall I be to the target before forming)
+             B) crowdAgent.targetPos... Unreliable, crowd should track them, together in one variable with formationInProgress
+             Maybe also as part of the formationHandler!
+            */
+            if (proximityDetector.isInTargetProximity(crowdAgent, newPos, DetourUtils.createVector3f(crowdAgent.targetPos))) {
+                formationInProgress[crowdAgent.idx] = false;
+                resetMoveTarget(crowdAgent.idx);
+                System.out.println("Reached Target");
+            }
         }
     }
 
