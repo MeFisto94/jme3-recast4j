@@ -1,6 +1,7 @@
 package com.jme3.recast4j.Detour.Crowd;
 
 import com.jme3.bullet.control.BetterCharacterControl;
+import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.recast4j.Detour.BetterDefaultQueryFilter;
 import com.jme3.recast4j.Detour.DetourUtils;
@@ -138,7 +139,10 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                 // Debug Code to handle "approaching behavior"
                 System.out.println("" + Boolean.toString(crowdAgent.targetRef != 0) + " speed: " + velocity.length() + " newPos: " + newPos + " velocity: " + velocity);
                 if (velocity.length() > 0.1f) {
+                    Quaternion rotation = new Quaternion();
+                    rotation.lookAt(velocity.normalize(), Vector3f.UNIT_Y);
                     spatialMap[crowdAgent.idx].setLocalTranslation(newPos);
+                    spatialMap[crowdAgent.idx].setLocalRotation(rotation);
                 }
                 break;
 
