@@ -172,7 +172,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
              @TODO: crowdAgent.targetPos... Unreliable, crowd should track them, together in one variable
              with formationInProgress. Maybe also as part of the formationHandler!
             */
-            if (SimpleTargetProximityDetector.euclideanDistanceSquared(crowdAgent, newPos,
+            if (SimpleTargetProximityDetector.euclideanDistanceSquared(newPos,
                     DetourUtils.createVector3f(crowdAgent.targetPos)) < 0.1f * 0.1f) {
                 formationInProgress[crowdAgent.idx] = false;
                 resetMoveTarget(crowdAgent.idx);
