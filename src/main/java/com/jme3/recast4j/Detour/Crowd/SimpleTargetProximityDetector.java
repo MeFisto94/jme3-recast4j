@@ -24,4 +24,8 @@ public class SimpleTargetProximityDetector implements TargetProximityDetector {
         this.distanceThreshold = distanceThreshold;
         this.distanceSquared = distanceThreshold * distanceThreshold;
     }
+
+    public static float euclideanDistanceSquared(CrowdAgent agent, Vector3f agentPos, Vector3f targetPos) {
+        return targetPos.subtract(agentPos).lengthSquared();
+    }
 }

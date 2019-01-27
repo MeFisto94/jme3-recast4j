@@ -155,8 +155,9 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
         // alternative: crowdAgent.targetPos != formationHandler.getTargetPosition(). But better not rely on these impls
         // and what if formation's targetPosition might change?
         if (!formationInProgress[crowdAgent.idx]) {
-            //@TODO: Instead of targetRef, expose targetState
-            if (crowdAgent.targetRef != 0 && proximityDetector.isInTargetProximity(crowdAgent, newPos, DetourUtils.createVector3f(crowdAgent.targetPos))) {
+            //@TODO: Instead of targetRef, expose targetState [which means create a WrapperClass soon]
+            if (crowdAgent.targetRef != 0 && proximityDetector.isInTargetProximity(crowdAgent, newPos,
+                    DetourUtils.createVector3f(crowdAgent.targetPos))) {
                 // Handle Crowd Agent in proximity.
                 resetMoveTarget(crowdAgent.idx); // Make him stop moving.
                 formationHandler.moveIntoFormation(crowdAgent);
@@ -164,14 +165,11 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
             }
         } else {
             /*
-             @TODO: Two Problems: A) Using ProximityDetector which has game specific logic. Is that okay here? It could
-             be that a proximity detector only knows about possible targetPos and not what our formation tries to be?
-             Because for a Formation which might not want a complicated class but only a "if < 0.2, okay". The ProximityDetector
-             on the other hand is game specific (how close shall I be to the target before forming)
-             B) crowdAgent.targetPos... Unreliable, crowd should track them, together in one variable with formationInProgress
-             Maybe also as part of the formationHandler!
+             @TODO: crowdAgent.targetPos... Unreliable, crowd should track them, together in one variable
+             with formationInProgress. Maybe also as part of the formationHandler!
             */
-            if (proximityDetector.isInTargetProximity(crowdAgent, newPos, DetourUtils.createVector3f(crowdAgent.targetPos))) {
+            if (SimpleTargetProximityDetector.euclideanDistanceSquared(crowdAgent, newPos,
+                    DetourUtils.createVector3f(crowdAgent.targetPos)) < 0.1f * 0.1f) {
                 formationInProgress[crowdAgent.idx] = false;
                 resetMoveTarget(crowdAgent.idx);
                 System.out.println("Reached Target");
