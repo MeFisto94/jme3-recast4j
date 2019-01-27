@@ -155,7 +155,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                  * SceneGraph Position
                  */
                 if (SimpleTargetProximityDetector.euclideanDistanceSquared(newPos,
-                        spatialMap[crowdAgent.idx].getWorldTranslation()) > 0.1f * 0.1f) {
+                        spatialMap[crowdAgent.idx].getWorldTranslation()) > 0.4f * 0.4f) {
                     /* Note: This should never occur but when collisions happen, they happen. Let's hope we can get away
                      * with that even though DtCrowd documentation explicitly states that one should not move agents
                      * constantly (okay, we only do it in rare cases, but still). Bugs could appear when some internal
