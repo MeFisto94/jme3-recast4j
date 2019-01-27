@@ -150,6 +150,21 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                 BetterCharacterControl bcc = spatialMap[crowdAgent.idx].getControl(BetterCharacterControl.class);
                 bcc.setWalkDirection(velocity);
                 bcc.setViewDirection(velocity.normalize());
+
+                /* Note: Unfortunately BetterCharacterControl does not expose getPhysicsLocation but it's tied to the
+                 * SceneGraph Position
+                 */
+                if (SimpleTargetProximityDetector.euclideanDistanceSquared(newPos,
+                        spatialMap[crowdAgent.idx].getWorldTranslation()) > 0.1f * 0.1f) {
+                    /* Note: This should never occur but when collisions happen, they happen. Let's hope we can get away
+                     * with that even though DtCrowd documentation explicitly states that one should not move agents
+                     * constantly (okay, we only do it in rare cases, but still). Bugs could appear when some internal
+                     * state is voided. The most clean solution would be removeAgent(), addAgent() but that has some
+                     * overhead as well as possibly messing with the index one which some 3rd-party code might rely on.
+                      */
+                    System.out.println("Resetting Agent because of physics drift");
+                    DetourUtils.fillFloatArray(crowdAgent.npos, spatialMap[crowdAgent.idx].getWorldTranslation());
+                }
                 break;
 
             default:
@@ -199,6 +214,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
      * @return whether this operation was successful
      */
     public boolean requestMoveToTarget(CrowdAgent crowdAgent, Vector3f to) {
+        // @TODO: m_navquery.getQueryExtents()?
         FindNearestPolyResult res = m_navquery.findNearestPoly(DetourUtils.toFloatArray(to), new float[]{0.5f, 0.5f, 0.5f}, new BetterDefaultQueryFilter());
         if (res.getNearestRef() != -1) {
             return requestMoveToTarget(crowdAgent, res.getNearestRef(), to);
