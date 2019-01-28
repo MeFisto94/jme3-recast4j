@@ -175,7 +175,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
         // and what if formation's targetPosition might change?
         if (!formationInProgress[crowdAgent.idx]) {
             //@TODO: Instead of targetRef, expose targetState [which means create a WrapperClass soon]
-            if (crowdAgent.targetRef != 0 && proximityDetector.isInTargetProximity(crowdAgent, newPos,
+            if (isMoving(crowdAgent) && proximityDetector.isInTargetProximity(crowdAgent, newPos,
                     DetourUtils.createVector3f(crowdAgent.targetPos))) {
                 // Handle Crowd Agent in proximity.
                 resetMoveTarget(crowdAgent.idx); // Make him stop moving.
@@ -232,5 +232,15 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
      */
     public boolean requestMoveToTarget(CrowdAgent crowdAgent, long polyRef, Vector3f to) {
         return requestMoveTarget(crowdAgent.idx, polyRef, DetourUtils.toFloatArray(to));
+    }
+
+    // @TODO: Improve the following two methods by A) using the internal state enums and or B) enhance them with information
+    // like "isForming"
+    public boolean isMoving(CrowdAgent crowdAgent) {
+        return crowdAgent.targetRef != 0 && crowdAgent.active;
+    }
+
+    public boolean isAtTarget(CrowdAgent crowdAgent) {
+        return crowdAgent.targetRef == 0 && crowdAgent.active;
     }
 }
