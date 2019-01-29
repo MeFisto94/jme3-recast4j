@@ -38,20 +38,20 @@ public class CircleFormationHandler implements FormationHandler {
     }
 
     @Override
-    public void moveIntoFormation(CrowdAgent crowdAgent) {
-        //@TODO: Assumption here is, that crowdAgent is not yet part of our formation
+    public Vector3f moveIntoFormation(CrowdAgent crowdAgent) {
+        //@TODO: Assumption here is, that crowdAgent is not yet part of our formation. Ensure that
         filledSlotIdx++;
         Quaternion q = new Quaternion();
         q.fromAngleAxis(angle * filledSlotIdx, Vector3f.UNIT_Y);
-        boolean b = crowd.requestMoveToTarget(crowdAgent,
-            target.add(
-                // Offset Vector: Rotate and scale to the radius
-                q.mult(Vector3f.UNIT_Z).mult(radius)
-            )
-        );
+
+        // Offset Vector: Rotate and scale to the radius
+        Vector3f v = target.add(q.mult(Vector3f.UNIT_Z).mult(radius));
+        boolean b = crowd.requestMoveToTarget(crowdAgent, v);
 
         if (!b) {
             // @TODO: Consider throwing an exception
         }
+
+        return target;
     }
 }
