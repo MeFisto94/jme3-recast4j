@@ -59,6 +59,10 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
         this.applyFunction = applyFunction;
     }
 
+    public MovementApplicationType getApplicationType() {
+        return applicationType;
+    }
+
     public void update(float deltaTime) {
         if (debug) {
             debugInfo = new CrowdAgentDebugInfo(); // Clear.
