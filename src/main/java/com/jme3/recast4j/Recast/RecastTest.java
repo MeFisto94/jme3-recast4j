@@ -22,6 +22,7 @@
  */
 package com.jme3.recast4j.Recast;
 
+import com.jme3.recast4j.Recast.Utils.Flags;
 import com.jme3.scene.Mesh;
 import com.jme3.scene.shape.Box;
 import org.recast4j.detour.MeshData;
@@ -56,6 +57,9 @@ public class RecastTest {
         } catch (Exception ex) {
 
         }
+
+        System.out.println(Flags.ofBitmask(1, 2, 4).setFlagByBitmask(8).setFlagByBitmask(16).getValue());
+        System.out.println(Flags.of(1, 2, 3).setFlag(4).setFlag(5).getValue());
     }
 
     public static MeshData buildBlockingRenderThread(Mesh m) {
