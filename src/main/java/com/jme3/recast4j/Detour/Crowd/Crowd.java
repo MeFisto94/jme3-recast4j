@@ -194,6 +194,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                 // use the return value for this. Then it would be less prone to user error. On the other hand the
                 // "do" something pattern is more implicative than "getFormationPosition"
             } else {
+                System.out.println("isMoving() " + isMoving(crowdAgent) + " and/or not in proximity of " + DetourUtils.createVector3f(crowdAgent.targetPos));
                 // @TODO: Stuck detection?
             }
         } else {
@@ -201,6 +202,8 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                     formationTargets[crowdAgent.idx]) < 0.1f * 0.1f) {
                 resetMoveTarget(crowdAgent.idx); // does formationTargets[crowdAgent.idx] = null; for us
                 System.out.println("Reached Target");
+            } else {
+                System.out.println("IS FORMING");
             }
         }
     }
