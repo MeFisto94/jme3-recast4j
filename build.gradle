@@ -1,8 +1,9 @@
 allprojects {
     repositories {
         mavenLocal()
+        maven { url "https://jitpack.io" }
         mavenCentral()
-        maven { url "https://jitpack.io" }        
+        //jcenter()
     }
 }
 
@@ -21,10 +22,10 @@ dependencies {
     implementation "org.jmonkeyengine:jme3-bullet:$jmeVersion"
     
     // recast4j
-    implementation 'com.github.ppiastucki.recast4j:parent:master-SNAPSHOT'
-    implementation 'com.github.ppiastucki.recast4j:detour-tile-cache:master-SNAPSHOT'
-    implementation 'com.github.ppiastucki.recast4j:detour-crowd:master-SNAPSHOT'
-    implementation 'com.github.ppiastucki.recast4j:detour-extras:master-SNAPSHOT'
-    implementation 'com.github.ppiastucki.recast4j:recast:master-SNAPSHOT'
-    implementation 'com.github.ppiastucki.recast4j:detour:master-SNAPSHOT'
+    compile 'com.github.ppiastucki.recast4j:parent:master-SNAPSHOT'
+    compile 'com.github.ppiastucki.recast4j:detour-tile-cache:master-SNAPSHOT'
+    compile 'com.github.ppiastucki.recast4j:detour-crowd:master-SNAPSHOT'
+    compile 'com.github.ppiastucki.recast4j:detour-extras:master-SNAPSHOT'
+    compile 'com.github.ppiastucki.recast4j:recast:master-SNAPSHOT'
+    compile 'com.github.ppiastucki.recast4j:detour:master-SNAPSHOT'
 }
