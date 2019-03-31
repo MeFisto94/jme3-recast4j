@@ -63,6 +63,19 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
         return applicationType;
     }
 
+    public FormationHandler getFormationHandler() {
+        return formationHandler;
+    }
+
+    /**
+     * Sets the Handler which will move the agents into formation when they are close to the target.<br>
+     * Passing null will disable formation.
+     * @param formationHandler The handler to use
+     */
+    public void setFormationHandler(FormationHandler formationHandler) {
+        this.formationHandler = formationHandler;
+    }
+
     public void update(float deltaTime) {
         if (debug) {
             debugInfo = new CrowdAgentDebugInfo(); // Clear.
@@ -121,7 +134,9 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
             throw new IllegalArgumentException("Invalid Target (" + to + ", " + polyRef + ")");
         }
 
-        formationHandler.setTargetPosition(to);
+        if (formationHandler != null) {
+            formationHandler.setTargetPosition(to);
+        }
 
         // Unfortunately ag.setTarget is not an exposed API, maybe we'll write a dispatcher class if that bugs me too much
         // Why? That way we could throw Exceptions when the index is wrong (IndexOutOfBoundsEx)
@@ -188,11 +203,17 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
             if (isMoving(crowdAgent) && proximityDetector.isInTargetProximity(crowdAgent, newPos,
                     DetourUtils.createVector3f(crowdAgent.targetPos))) {
                 // Handle Crowd Agent in proximity.
-                resetMoveTarget(crowdAgent.idx); // Make him stop moving.
-                formationTargets[crowdAgent.idx] = formationHandler.moveIntoFormation(crowdAgent);
-                // It's up to moveIntoFormation to make the agent move, we could however also design the API so we just
-                // use the return value for this. Then it would be less prone to user error. On the other hand the
-                // "do" something pattern is more implicative than "getFormationPosition"
+                if (formationHandler != null) {
+                    resetMoveTarget(crowdAgent.idx); // Make him stop moving.
+                    formationTargets[crowdAgent.idx] = formationHandler.moveIntoFormation(crowdAgent);
+                    // It's up to moveIntoFormation to make the agent move, we could however also design the API so we just
+                    // use the return value for this. Then it would be less prone to user error. On the other hand the
+                    // "do" something pattern is more implicative than "getFormationPosition"
+                } else {
+                    //formationTargets[crowdAgent.idx] = DetourUtils.createVector3f(crowdAgent.targetPos);
+                    resetMoveTarget(crowdAgent.idx); // Make him stop moving.
+                }
+
             } else {
                 System.out.println("isMoving() " + isMoving(crowdAgent) + " and/or not in proximity of " + DetourUtils.createVector3f(crowdAgent.targetPos));
                 // @TODO: Stuck detection?
