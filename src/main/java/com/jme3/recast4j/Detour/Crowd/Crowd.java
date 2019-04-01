@@ -149,8 +149,9 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
      * This method is called by the CrowdManager to move the agents on the screen.
      */
     protected void applyMovements() {
-        getActiveAgents().forEach(ca -> applyMovement(ca, DetourUtils.createVector3f(ca.npos),
-                DetourUtils.createVector3f(ca.vel)));
+        getActiveAgents().stream().filter(this::isMoving)
+            .forEach(ca -> applyMovement(ca, DetourUtils.createVector3f(ca.npos),
+                            DetourUtils.createVector3f(ca.vel)));
     }
 
     protected void applyMovement(CrowdAgent crowdAgent, Vector3f newPos, Vector3f velocity) {
@@ -200,7 +201,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
 
         // If we aren't currently forming.
         if (formationTargets[crowdAgent.idx] == null) {
-            if (isMoving(crowdAgent) && proximityDetector.isInTargetProximity(crowdAgent, newPos,
+            if (proximityDetector.isInTargetProximity(crowdAgent, newPos,
                     DetourUtils.createVector3f(crowdAgent.targetPos))) {
                 // Handle Crowd Agent in proximity.
                 if (formationHandler != null) {
@@ -210,12 +211,11 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                     // use the return value for this. Then it would be less prone to user error. On the other hand the
                     // "do" something pattern is more implicative than "getFormationPosition"
                 } else {
-                    //formationTargets[crowdAgent.idx] = DetourUtils.createVector3f(crowdAgent.targetPos);
                     resetMoveTarget(crowdAgent.idx); // Make him stop moving.
                 }
 
             } else {
-                System.out.println("isMoving() " + isMoving(crowdAgent) + " and/or not in proximity of " + DetourUtils.createVector3f(crowdAgent.targetPos));
+                System.out.println("not in proximity of " + DetourUtils.createVector3f(crowdAgent.targetPos));
                 // @TODO: Stuck detection?
             }
         } else {
