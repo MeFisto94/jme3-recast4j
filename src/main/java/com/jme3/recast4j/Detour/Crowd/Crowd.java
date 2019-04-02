@@ -256,8 +256,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
      * @return whether this operation was successful
      */
     public boolean requestMoveToTarget(CrowdAgent crowdAgent, Vector3f to) {
-        // @TODO: m_navquery.getQueryExtents()?
-        Result<FindNearestPolyResult> res = m_navquery.findNearestPoly(DetourUtils.toFloatArray(to), new float[]{0.5f, 0.5f, 0.5f},
+        Result<FindNearestPolyResult> res = m_navquery.findNearestPoly(DetourUtils.toFloatArray(to), getQueryExtents(),
                 getFilter(crowdAgent.params.queryFilterType));
 
         if (res.status.isSuccess() && res.result.getNearestRef() != -1) {
