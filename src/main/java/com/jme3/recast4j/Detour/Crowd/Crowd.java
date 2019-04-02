@@ -124,28 +124,6 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
     }
 
     /**
-     * Makes the whole Crowd move to a target. Know that you can also move individual agents.
-     * @param to The Move Target
-     * @param polyRef The Polygon to which the target belongs
-     * @return Whether all agents could be scheduled to approach the target
-     */
-    public boolean requestMoveToTarget(Vector3f to, long polyRef) {
-        if (polyRef == 0 || to == null) {
-            throw new IllegalArgumentException("Invalid Target (" + to + ", " + polyRef + ")");
-        }
-
-        if (formationHandler != null) {
-            formationHandler.setTargetPosition(to);
-        }
-
-        // Unfortunately ag.setTarget is not an exposed API, maybe we'll write a dispatcher class if that bugs me too much
-        // Why? That way we could throw Exceptions when the index is wrong (IndexOutOfBoundsEx)
-        return getActiveAgents().stream()
-            .allMatch(ca -> requestMoveTarget(ca.idx, polyRef, DetourUtils.toFloatArray(to)));
-        // if all were successful, return true, else return false.
-    }
-
-    /**
      * This method is called by the CrowdManager to move the agents on the screen.
      */
     protected void applyMovements() {
@@ -230,6 +208,45 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
     }
 
     /**
+     * Makes the whole Crowd move to a target. Know that you can also move individual agents.
+     * @param to The Move Target
+     * @param polyRef The Polygon to which the target belongs
+     * @return Whether all agents could be scheduled to approach the target
+     * @deprecated Will be removed because specifying the polyRef is undesired (as crashes happen
+     * when this value is wrong (e.g. not taken the Filters into account)).
+     */
+    @Deprecated
+    protected boolean requestMoveToTarget(Vector3f to, long polyRef) {
+        if (polyRef == 0 || to == null) {
+            throw new IllegalArgumentException("Invalid Target (" + to + ", " + polyRef + ")");
+        }
+
+        if (formationHandler != null) {
+            formationHandler.setTargetPosition(to);
+        }
+
+        // Unfortunately ag.setTarget is not an exposed API, maybe we'll write a dispatcher class if that bugs me too much
+        // Why? That way we could throw Exceptions when the index is wrong (IndexOutOfBoundsEx)
+        return getActiveAgents().stream()
+                .allMatch(ca -> requestMoveTarget(ca.idx, polyRef, DetourUtils.toFloatArray(to)));
+
+    }
+
+    /**
+     * Makes the whole Crowd move to a target. Know that you can also move individual agents.
+     * @param to The Move Target
+     * @return Whether all agents could be scheduled to approach the target
+     * @see #requestMoveToTarget(CrowdAgent, Vector3f)
+     */
+    public boolean requestMoveToTarget(Vector3f to) {
+        if (formationHandler != null) {
+            formationHandler.setTargetPosition(to);
+        }
+        return getActiveAgents().stream().allMatch(ca -> requestMoveToTarget(ca, to));
+        // if all were successful, return true, else return false.
+    }
+
+    /**
      * Moves a specified Agent to a Location.<br />
      * This code implicitly searches for the correct polygon with a constant tolerance, in most cases you should prefer
      * to determine the poly ref manually with domain specific knowledge.
@@ -244,7 +261,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                 getFilter(crowdAgent.params.queryFilterType));
 
         if (res.status.isSuccess() && res.result.getNearestRef() != -1) {
-            return requestMoveToTarget(crowdAgent, res.result.getNearestRef(), to);
+            return requestMoveTarget(crowdAgent.idx, res.result.getNearestRef(), DetourUtils.toFloatArray(to));
         } else {
             return false;
         }
@@ -256,8 +273,10 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
      * @param polyRef The Polygon where the position resides
      * @param to where the agent shall move to
      * @return whether this operation was successful
+     * @deprecated Use non-polRef instead
      */
-    public boolean requestMoveToTarget(CrowdAgent crowdAgent, long polyRef, Vector3f to) {
+    @Deprecated
+    protected boolean requestMoveToTarget(CrowdAgent crowdAgent, long polyRef, Vector3f to) {
         return requestMoveTarget(crowdAgent.idx, polyRef, DetourUtils.toFloatArray(to));
     }
 
