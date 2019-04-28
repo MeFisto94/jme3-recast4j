@@ -18,11 +18,13 @@ public class CircleFormationHandler implements FormationHandler {
     protected float radius;
     protected int filledSlotIdx;
     protected float angle;
+    private final float distanceSquared;
 
     public CircleFormationHandler(int maxAgents, Crowd crowd, float radius) {
         this.numAgents = maxAgents;
         this.crowd = crowd;
         this.radius = radius;
+        distanceSquared = Math.max(0.1f * 0.1f, (radius * radius) / (3f * 3f));
     }
 
     @Override
@@ -53,5 +55,12 @@ public class CircleFormationHandler implements FormationHandler {
         }
 
         return target;
+    }
+
+    @Override
+    public boolean isInFormationProximity(Vector3f actualPosition, Vector3f targetPosition) {
+        float a = SimpleTargetProximityDetector.euclideanDistanceSquared(actualPosition, targetPosition);
+        System.out.println(a + " < " + distanceSquared + " = " + (a < distanceSquared));
+        return a < distanceSquared;
     }
 }

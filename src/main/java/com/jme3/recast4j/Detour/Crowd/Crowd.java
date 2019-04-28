@@ -133,6 +133,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
     }
 
     protected void applyMovement(CrowdAgent crowdAgent, Vector3f newPos, Vector3f velocity) {
+        float vel = velocity.length();
         switch (applicationType) {
             case NONE:
                 break;
@@ -143,8 +144,8 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
 
             case DIRECT:
                 // Debug Code to handle "approaching behavior"
-                System.out.println("" + Boolean.toString(crowdAgent.targetRef != 0) + " speed: " + velocity.length() + " newPos: " + newPos + " velocity: " + velocity);
-                if (velocity.length() > 0.1f) {
+                System.out.println("" + Boolean.toString(crowdAgent.targetRef != 0) + " speed: " + vel + " newPos: " + newPos + " velocity: " + velocity);
+                if (vel > 0.01f) {
                     Quaternion rotation = new Quaternion();
                     rotation.lookAt(velocity.normalize(), Vector3f.UNIT_Y);
                     spatialMap[crowdAgent.idx].setLocalTranslation(newPos);
@@ -197,12 +198,16 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                 // @TODO: Stuck detection?
             }
         } else {
-            if (SimpleTargetProximityDetector.euclideanDistanceSquared(newPos,
-                    formationTargets[crowdAgent.idx]) < 0.1f * 0.1f) {
+            // alternatively let crowd handle that.
+            if (vel < 0.01f) { // This happens when the formationHandler is too picky about the position and crowd stops moving.
+                resetMoveTarget(crowdAgent.idx); // does formationTargets[crowdAgent.idx] = null; for us
+                System.out.println("Crowd has decided to stop here.......");
+            } else if (vel < 0.1f && formationHandler.isInFormationProximity(newPos, formationTargets[crowdAgent.idx])) {
                 resetMoveTarget(crowdAgent.idx); // does formationTargets[crowdAgent.idx] = null; for us
                 System.out.println("Reached Target");
             } else {
-                System.out.println("IS FORMING");
+                System.out.println("IS FORMING: "); /*+ SimpleTargetProximityDetector.euclideanDistanceSquared(newPos,
+                        formationTargets[crowdAgent.idx]) + " > " + 0.1f * 0.1f);*/
             }
         }
     }
