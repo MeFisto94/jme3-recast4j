@@ -3,7 +3,7 @@ allprojects {
         mavenLocal()
         maven { url "https://jitpack.io" }
         mavenCentral()
-        //jcenter()
+        jcenter()
     }
 }
 
