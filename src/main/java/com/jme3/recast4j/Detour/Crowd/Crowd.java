@@ -7,7 +7,6 @@ import com.jme3.recast4j.Detour.BetterDefaultQueryFilter;
 import com.jme3.recast4j.Detour.DetourUtils;
 import com.jme3.scene.Spatial;
 import org.recast4j.detour.*;
-import org.recast4j.detour.crowd.CrowdAgent;
 import org.recast4j.detour.crowd.CrowdAgentParams;
 import org.recast4j.detour.crowd.debug.CrowdAgentDebugInfo;
 
@@ -28,6 +27,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
     protected TargetProximityDetector proximityDetector;
     protected FormationHandler formationHandler;
     protected NavMeshQuery m_navquery;
+    protected org.recast4j.detour.crowd.CrowdAgent[] m_agents;
     protected Vector3f[] formationTargets;
 
     public Crowd(MovementApplicationType applicationType, int maxAgents, float maxAgentRadius, NavMesh nav)
@@ -40,13 +40,23 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
     public Crowd(MovementApplicationType applicationType, int maxAgents, float maxAgentRadius, NavMesh nav,
                  IntFunction<QueryFilter> queryFilterFactory) throws NoSuchFieldException, IllegalAccessException {
         super(maxAgents, maxAgentRadius, nav, queryFilterFactory);
+        Field f = getClass().getSuperclass().getDeclaredField("m_agents");
+        f.setAccessible(true);
+        m_agents = (org.recast4j.detour.crowd.CrowdAgent[])f.get(this);
+
+        //@FIXME: Not very GC friendly, but avoids code duplication
+        for (int i = 0; i < maxAgents; ++i) {
+            m_agents[i] = new CrowdAgent(i);
+            m_agents[i].active = false;
+        }
+
         this.applicationType = applicationType;
         spatialMap = new Spatial[maxAgents];
         proximityDetector = new SimpleTargetProximityDetector(1f);
         formationHandler = new CircleFormationHandler(maxAgents, this, 1f);
         formationTargets = new Vector3f[maxAgents];
 
-        Field f = getClass().getSuperclass().getDeclaredField("m_navquery");
+        f = getClass().getSuperclass().getDeclaredField("m_navquery");
         f.setAccessible(true);
         m_navquery = (NavMeshQuery)f.get(this);
     }
@@ -87,7 +97,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
 
     @Override
     public CrowdAgent getAgent(int idx) {
-        CrowdAgent ca = super.getAgent(idx);
+        CrowdAgent ca = (CrowdAgent)super.getAgent(idx);
         if (ca == null) {
             throw new IndexOutOfBoundsException("Invalid Index");
         }
@@ -100,7 +110,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
         if (idx == -1) {
             throw new IndexOutOfBoundsException("This crowd doesn't have a free slot anymore.");
         }
-        return super.getAgent(idx);
+        return (CrowdAgent)super.getAgent(idx);
     }
 
     /**
@@ -109,7 +119,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
      * @param agent The Agent
      * @param spatial The Agent's Spatial
      */
-    public void setSpatialForAgent(CrowdAgent agent, Spatial spatial) {
+    public void setSpatialForAgent(org.recast4j.detour.crowd.CrowdAgent agent, Spatial spatial) {
         spatialMap[agent.idx] = spatial;
     }
 
@@ -117,7 +127,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
      * Remove the Agent from this Crowd (Convenience Wrapper around {@link #removeAgent(int)})
      * @param agent The Agent to remove from the crowd
      */
-    public void removeAgent(CrowdAgent agent) {
+    public void removeAgent(org.recast4j.detour.crowd.CrowdAgent agent) {
         if (agent.idx != -1) {
             removeAgent(agent.idx);
         }
@@ -132,7 +142,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                             DetourUtils.createVector3f(ca.vel)));
     }
 
-    protected void applyMovement(CrowdAgent crowdAgent, Vector3f newPos, Vector3f velocity) {
+    protected void applyMovement(org.recast4j.detour.crowd.CrowdAgent crowdAgent, Vector3f newPos, Vector3f velocity) {
         float vel = velocity.length();
         switch (applicationType) {
             case NONE:
@@ -241,13 +251,15 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
      * Makes the whole Crowd move to a target. Know that you can also move individual agents.
      * @param to The Move Target
      * @return Whether all agents could be scheduled to approach the target
-     * @see #requestMoveToTarget(CrowdAgent, Vector3f)
+     * @see #requestMoveToTarget(org.recast4j.detour.crowd.CrowdAgent, Vector3f)
      */
     public boolean requestMoveToTarget(Vector3f to) {
         if (formationHandler != null) {
             formationHandler.setTargetPosition(to);
         }
-        return getActiveAgents().stream().allMatch(ca -> requestMoveToTarget(ca, to));
+        return getActiveAgents().stream()
+                .filter(ca -> (!(ca instanceof CrowdAgent) || !((CrowdAgent) ca).isGhost()))
+                .allMatch(ca -> requestMoveToTarget(ca, to));
         // if all were successful, return true, else return false.
     }
 
@@ -255,12 +267,12 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
      * Moves a specified Agent to a Location.<br />
      * This code implicitly searches for the correct polygon with a constant tolerance, in most cases you should prefer
      * to determine the poly ref manually with domain specific knowledge.
-     * @see #requestMoveToTarget(CrowdAgent, long, Vector3f)
+     * @see #requestMoveToTarget(org.recast4j.detour.crowd.CrowdAgent, long, Vector3f)
      * @param crowdAgent the agent to move
      * @param to where the agent shall move to
      * @return whether this operation was successful
      */
-    public boolean requestMoveToTarget(CrowdAgent crowdAgent, Vector3f to) {
+    public boolean requestMoveToTarget(org.recast4j.detour.crowd.CrowdAgent crowdAgent, Vector3f to) {
         Result<FindNearestPolyResult> res = m_navquery.findNearestPoly(DetourUtils.toFloatArray(to), getQueryExtents(),
                 getFilter(crowdAgent.params.queryFilterType));
 
@@ -280,7 +292,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
      * @deprecated Use non-polRef instead
      */
     @Deprecated
-    protected boolean requestMoveToTarget(CrowdAgent crowdAgent, long polyRef, Vector3f to) {
+    protected boolean requestMoveToTarget(org.recast4j.detour.crowd.CrowdAgent crowdAgent, long polyRef, Vector3f to) {
         return requestMoveTarget(crowdAgent.idx, polyRef, DetourUtils.toFloatArray(to));
     }
 
@@ -301,26 +313,26 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
      * @param crowdAgent The agent to query
      * @return If the agent is moving
      */
-    public boolean isMoving(CrowdAgent crowdAgent) {
+    public boolean isMoving(org.recast4j.detour.crowd.CrowdAgent crowdAgent) {
         return crowdAgent.active && crowdAgent.targetState == CrowdAgent.MoveRequestState.DT_CROWDAGENT_TARGET_VALID;
     }
 
     /**
-     * When the Agent is ACTIVE and has no target (this is not the same as !{@link #isMoving(CrowdAgent)}).
+     * When the Agent is ACTIVE and has no target (this is not the same as !{@link #isMoving(org.recast4j.detour.crowd.CrowdAgent)}).
      * @param crowdAgent The agent to query
      * @return If the agent has no target
      */
-    public boolean hasNoTarget(CrowdAgent crowdAgent) {
+    public boolean hasNoTarget(org.recast4j.detour.crowd.CrowdAgent crowdAgent) {
         return crowdAgent.active && crowdAgent.targetState == CrowdAgent.MoveRequestState.DT_CROWDAGENT_TARGET_NONE;
     }
 
     /**
      * When the Agent is ACTIVE and moving into a formation (which means he is close enough to his target, by the means
-     * of {@link TargetProximityDetector#isInTargetProximity(CrowdAgent, Vector3f, Vector3f)}
+     * of {@link TargetProximityDetector#isInTargetProximity(org.recast4j.detour.crowd.CrowdAgent, Vector3f, Vector3f)}
      * @param crowdAgent The Agent to query
      * @return If the Agent is forming
      */
-    public boolean isForming(CrowdAgent crowdAgent) {
+    public boolean isForming(org.recast4j.detour.crowd.CrowdAgent crowdAgent) {
         return crowdAgent.active && formationTargets[crowdAgent.idx] != null;
     }
 }
