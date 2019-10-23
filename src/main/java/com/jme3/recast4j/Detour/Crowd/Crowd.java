@@ -134,6 +134,28 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
     }
 
     /**
+     * This method is used to prepare the correct state before update() is called. <br />
+     * It should be run in the main thread, as that is what
+     * {@link com.jme3.recast4j.Detour.Crowd.Impl.CrowdManagerAppstate } would do.
+     */
+    public void preUpdate(float deltaTime) {
+        getActiveAgents().stream().filter(ca -> (ca instanceof CrowdAgent && ((CrowdAgent) ca).isGhost()))
+            .forEach(ca -> {
+                /* See comment in applyMovement with BETTER_CHARACTER_CONTROL): DetourCrowd advices against it, but it
+                 * might work here, as we don't need Detour's calculations for this Agent at all. Actually it shouldn't
+                 * even move.
+                 */
+                Vector3f oldVec = DetourUtils.createVector3f(ca.npos);
+                Vector3f newVec = spatialMap[ca.idx].getWorldTranslation();
+                Vector3f vel = newVec.subtract(oldVec).divide(deltaTime);
+
+                DetourUtils.fillFloatArray(ca.npos, newVec);
+                DetourUtils.fillFloatArray(ca.vel, vel);
+            }
+        );
+    }
+
+    /**
      * This method is called by the CrowdManager to move the agents on the screen.
      */
     protected void applyMovements() {
@@ -177,7 +199,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                      * with that even though DtCrowd documentation explicitly states that one should not move agents
                      * constantly (okay, we only do it in rare cases, but still). Bugs could appear when some internal
                      * state is voided. The most clean solution would be removeAgent(), addAgent() but that has some
-                     * overhead as well as possibly messing with the index one which some 3rd-party code might rely on.
+                     * overhead as well as possibly messing with the index, on which some 3rd-party code might rely on.
                       */
                     System.out.println("Resetting Agent because of physics drift");
                     DetourUtils.fillFloatArray(crowdAgent.npos, spatialMap[crowdAgent.idx].getWorldTranslation());

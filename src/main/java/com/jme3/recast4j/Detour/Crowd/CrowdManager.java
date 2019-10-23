@@ -75,8 +75,9 @@ public class CrowdManager {
                     throw new IllegalArgumentException("Unknown Update Type");
             }
 
+            crowdList.forEach(c -> c.preUpdate(timePassed));
             stream.forEach(c -> c.update(timePassed));
-            crowdList.stream().forEach(Crowd::applyMovements);
+            crowdList.forEach(Crowd::applyMovements);
         } finally {
             lock.unlock();
         }
