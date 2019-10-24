@@ -187,6 +187,12 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
 
             case BETTER_CHARACTER_CONTROL:
                 BetterCharacterControl bcc = spatialMap[crowdAgent.idx].getControl(BetterCharacterControl.class);
+
+                if (crowdAgent.state == org.recast4j.detour.crowd.CrowdAgent.CrowdAgentState.DT_CROWDAGENT_STATE_OFFMESH) {
+                    bcc.warp(newPos); // Teleport through the air without any feedback.
+                    return; // Initial "return": Don't even bother with formation or other logic.
+                }
+
                 bcc.setWalkDirection(velocity);
                 bcc.setViewDirection(velocity.normalize());
 
