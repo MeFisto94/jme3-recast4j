@@ -1,0 +1,13 @@
+package com.jme3.recast4j.test;
+
+import com.jme3.recast4j.Detour.Crowd.Crowd;
+
+public interface Scenario {
+    String getName();
+
+    /**
+     * Warning: This is WIP, the method signature most likely will change once we've come up with a few common test cases
+     * @return The Crowds that are required and have been produced.
+     */
+    Crowd[] run();
+}
