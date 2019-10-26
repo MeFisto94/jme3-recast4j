@@ -7,9 +7,11 @@ package com.jme3.recast4j.Detour.Crowd;
  */
 public class CrowdAgent extends org.recast4j.detour.crowd.CrowdAgent {
     protected boolean isGhost = false;
+    protected Crowd crowd;
 
-    public CrowdAgent(int idx) {
+    public CrowdAgent(int idx, Crowd crowd) {
         super(idx);
+        this.crowd = crowd;
     }
 
     public boolean isGhost() {
@@ -18,5 +20,9 @@ public class CrowdAgent extends org.recast4j.detour.crowd.CrowdAgent {
 
     public void setGhost(boolean ghost) {
         isGhost = ghost;
+    }
+
+    public Crowd getCrowd() {
+        return crowd;
     }
 }

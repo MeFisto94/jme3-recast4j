@@ -46,7 +46,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
 
         //@FIXME: Not very GC friendly, but avoids code duplication
         for (int i = 0; i < maxAgents; ++i) {
-            m_agents[i] = new CrowdAgent(i);
+            m_agents[i] = new CrowdAgent(i, this);
             m_agents[i].active = false;
         }
 
