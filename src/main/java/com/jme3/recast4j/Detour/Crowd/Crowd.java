@@ -4,6 +4,7 @@ import com.jme3.bullet.control.BetterCharacterControl;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.recast4j.Detour.BetterDefaultQueryFilter;
+import com.jme3.recast4j.Detour.Crowd.Impl.CrowdManagerAppState;
 import com.jme3.recast4j.Detour.DetourUtils;
 import com.jme3.scene.Spatial;
 import org.recast4j.detour.*;
@@ -141,7 +142,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
     /**
      * This method is used to prepare the correct state before update() is called. <br />
      * It should be run in the main thread, as that is what
-     * {@link com.jme3.recast4j.Detour.Crowd.Impl.CrowdManagerAppstate } would do.
+     * {@link CrowdManagerAppState } would do.
      */
     public void preUpdate(float deltaTime) {
         getActiveAgents().stream().filter(ca -> (ca instanceof CrowdAgent && ((CrowdAgent) ca).isGhost()))
