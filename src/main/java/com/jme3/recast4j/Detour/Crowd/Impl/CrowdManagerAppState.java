@@ -5,14 +5,19 @@ import com.jme3.app.state.BaseAppState;
 import com.jme3.recast4j.Detour.Crowd.CrowdManager;
 
 /**
- * CrowdManagerAppstate is a wrapper around the "CrowdManager" class to provide an easier interfacing with the jMonkeyEngine.
+ * CrowdManagerAppState is a wrapper around the "CrowdManager" class to provide easier interfacing with
+ * the jMonkeyEngine.<br />
  * Use this as starting point for your entity-based approaches.
  */
-public class CrowdManagerAppstate extends BaseAppState {
-    CrowdManager crowdManager;
+public class CrowdManagerAppState extends BaseAppState {
+    protected CrowdManager crowdManager;
 
-    public CrowdManagerAppstate(CrowdManager crowdManager) {
+    public CrowdManagerAppState(CrowdManager crowdManager) {
         this.crowdManager = crowdManager;
+    }
+
+    public CrowdManagerAppState() {
+        this(new CrowdManager());
     }
 
     public CrowdManager getCrowdManager() {
