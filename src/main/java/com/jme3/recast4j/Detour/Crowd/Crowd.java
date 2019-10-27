@@ -31,34 +31,39 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
     protected Vector3f[] formationTargets;
 
     public Crowd(MovementApplicationType applicationType, int maxAgents, float maxAgentRadius, NavMesh nav)
-            throws NoSuchFieldException, IllegalAccessException {
+            throws InstantiationException {
         this(applicationType, maxAgents, maxAgentRadius, nav,
-                i -> (i == 0 ? new BetterDefaultQueryFilter() : new DefaultQueryFilter())
+            i -> (i == 0 ? new BetterDefaultQueryFilter() : new DefaultQueryFilter())
         );
     }
 
     public Crowd(MovementApplicationType applicationType, int maxAgents, float maxAgentRadius, NavMesh nav,
-                 IntFunction<QueryFilter> queryFilterFactory) throws NoSuchFieldException, IllegalAccessException {
+        IntFunction<QueryFilter> queryFilterFactory) throws InstantiationException {
         super(maxAgents, maxAgentRadius, nav, queryFilterFactory);
-        Field f = getClass().getSuperclass().getDeclaredField("m_agents");
-        f.setAccessible(true);
-        m_agents = (org.recast4j.detour.crowd.CrowdAgent[])f.get(this);
+        try {
+            Field f = getClass().getSuperclass().getDeclaredField("m_agents");
+            f.setAccessible(true);
+            m_agents = (org.recast4j.detour.crowd.CrowdAgent[]) f.get(this);
 
-        //@FIXME: Not very GC friendly, but avoids code duplication
-        for (int i = 0; i < maxAgents; ++i) {
-            m_agents[i] = new CrowdAgent(i, this);
-            m_agents[i].active = false;
+            //@FIXME: Not very GC friendly, but avoids code duplication
+            for (int i = 0; i < maxAgents; ++i) {
+                m_agents[i] = new CrowdAgent(i, this);
+                m_agents[i].active = false;
+            }
+
+            this.applicationType = applicationType;
+            spatialMap = new Spatial[maxAgents];
+            proximityDetector = new SimpleTargetProximityDetector(1f);
+            formationHandler = new CircleFormationHandler(maxAgents, this, 1f);
+            formationTargets = new Vector3f[maxAgents];
+
+            f = getClass().getSuperclass().getDeclaredField("m_navquery");
+            f.setAccessible(true);
+            m_navquery = (NavMeshQuery) f.get(this);
+        } catch (NoSuchFieldException | IllegalAccessException iae) {
+            throw new InstantiationException("Internal Problem: Failed to reflectively access recast4j's Crowd fields." +
+                    " This could be a Version mismatch?!\n" + iae.toString());
         }
-
-        this.applicationType = applicationType;
-        spatialMap = new Spatial[maxAgents];
-        proximityDetector = new SimpleTargetProximityDetector(1f);
-        formationHandler = new CircleFormationHandler(maxAgents, this, 1f);
-        formationTargets = new Vector3f[maxAgents];
-
-        f = getClass().getSuperclass().getDeclaredField("m_navquery");
-        f.setAccessible(true);
-        m_navquery = (NavMeshQuery)f.get(this);
     }
 
     public void setApplicationType(MovementApplicationType applicationType) {
@@ -218,6 +223,8 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
 
         // If we aren't currently forming.
         if (formationTargets[crowdAgent.idx] == null) {
+            // @TODO: Move Proximity Detector into Crowd Agent to allow for custom detectors?
+            // Collides with Formation Handlers though.
             if (proximityDetector.isInTargetProximity(crowdAgent, newPos,
                     DetourUtils.createVector3f(crowdAgent.targetPos))) {
                 // Handle Crowd Agent in proximity.
@@ -334,6 +341,11 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
     public boolean resetMoveTarget(int idx) {
         formationTargets[idx] = null;
         return super.resetMoveTarget(idx);
+    }
+
+    public boolean resetMoveTarget(CrowdAgent agent) {
+        assert agent.crowd == this;
+        return resetMoveTarget(agent.idx);
     }
 
     /**
