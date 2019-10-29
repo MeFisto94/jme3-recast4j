@@ -353,7 +353,9 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
      * When the Agent is ACTIVE and moving (has a valid target set).
      * @param crowdAgent The agent to query
      * @return If the agent is moving
+     * @deprecated See the Methods under {@link CrowdAgent}
      */
+    @Deprecated
     public boolean isMoving(org.recast4j.detour.crowd.CrowdAgent crowdAgent) {
         return crowdAgent.active && crowdAgent.targetState == CrowdAgent.MoveRequestState.DT_CROWDAGENT_TARGET_VALID;
     }
@@ -362,7 +364,9 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
      * When the Agent is ACTIVE and has no target (this is not the same as !{@link #isMoving(org.recast4j.detour.crowd.CrowdAgent)}).
      * @param crowdAgent The agent to query
      * @return If the agent has no target
+     * @deprecated See the Methods under {@link CrowdAgent}
      */
+    @Deprecated
     public boolean hasNoTarget(org.recast4j.detour.crowd.CrowdAgent crowdAgent) {
         return crowdAgent.active && crowdAgent.targetState == CrowdAgent.MoveRequestState.DT_CROWDAGENT_TARGET_NONE;
     }

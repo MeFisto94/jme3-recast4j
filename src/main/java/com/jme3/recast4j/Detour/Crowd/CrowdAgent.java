@@ -14,6 +14,24 @@ public class CrowdAgent extends org.recast4j.detour.crowd.CrowdAgent {
         this.crowd = crowd;
     }
 
+    public boolean isMoving() {
+        return active &&
+                (state == CrowdAgentState.DT_CROWDAGENT_STATE_OFFMESH ||
+                 state == CrowdAgentState.DT_CROWDAGENT_STATE_WALKING);
+    }
+
+    public boolean hasNoInvalidTarget() {
+        return active && targetState != MoveRequestState.DT_CROWDAGENT_TARGET_FAILED;
+    }
+
+    public boolean hasValidTarget() {
+        return active && targetState == CrowdAgent.MoveRequestState.DT_CROWDAGENT_TARGET_VALID;
+    }
+
+    public boolean hasNoTarget() {
+        return active && targetState == CrowdAgent.MoveRequestState.DT_CROWDAGENT_TARGET_NONE;
+    }
+
     public boolean isGhost() {
         return isGhost;
     }
