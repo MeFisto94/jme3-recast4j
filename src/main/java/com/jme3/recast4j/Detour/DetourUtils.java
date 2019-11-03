@@ -61,7 +61,7 @@ public class DetourUtils {
      * Simplifies interfacing with float arrays. Create a new float array from a Vector3f instance.<br />
      * This method does nothing else than Vector3f#toArray, but people might expect such a method here and
      * didn't know about that method.<br />
-     * When possible, use {@link #fillFloatArray(float[], Vector3f)} to reduce Garbage
+     * When possible, use {@link #fillFloatArray(float[], Vector3f)} to reduce garbage
      *
      * @see #createVector3f(float[])
      * @see #fillFloatArray(float[], Vector3f)
