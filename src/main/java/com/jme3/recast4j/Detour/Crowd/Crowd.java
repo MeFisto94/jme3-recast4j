@@ -177,7 +177,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
     protected void applyMovement(org.recast4j.detour.crowd.CrowdAgent crowdAgent, Vector3f newPos, Vector3f velocity) {
         float vel = velocity.length();
 
-        log.debug("crowdAgent i={}, newPos={}, velocity={}[{}]", i, newPos, velocity, vel);
+        log.debug("crowdAgent i={}, newPos={}, velocity={}[{}]", crowdAgent.idx, newPos, velocity, vel);
 
         switch (applicationType) {
             case NONE:
