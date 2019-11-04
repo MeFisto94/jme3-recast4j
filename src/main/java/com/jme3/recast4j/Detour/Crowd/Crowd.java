@@ -10,6 +10,8 @@ import com.jme3.scene.Spatial;
 import org.recast4j.detour.*;
 import org.recast4j.detour.crowd.CrowdAgentParams;
 import org.recast4j.detour.crowd.debug.CrowdAgentDebugInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.function.IntFunction;
@@ -20,6 +22,8 @@ import java.util.function.IntFunction;
  * (index 0) will be the {@link BetterDefaultQueryFilter} and all others will be filled with {@link DefaultQueryFilter}s
  */
 public class Crowd extends org.recast4j.detour.crowd.Crowd {
+    private static final Logger log = LoggerFactory.getLogger(Crowd.class);
+
     protected boolean debug;
     protected CrowdAgentDebugInfo debugInfo;
     protected MovementApplicationType applicationType;
@@ -172,6 +176,9 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
 
     protected void applyMovement(org.recast4j.detour.crowd.CrowdAgent crowdAgent, Vector3f newPos, Vector3f velocity) {
         float vel = velocity.length();
+
+        log.debug("crowdAgent i={}, newPos={}, velocity={}[{}]", i, newPos, velocity, vel);
+
         switch (applicationType) {
             case NONE:
                 break;
@@ -181,8 +188,6 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                 break;
 
             case DIRECT:
-                // Debug Code to handle "approaching behavior"
-                System.out.println("" + Boolean.toString(crowdAgent.targetRef != 0) + " speed: " + vel + " newPos: " + newPos + " velocity: " + velocity);
                 if (vel > 0.01f) {
                     Quaternion rotation = new Quaternion();
                     rotation.lookAt(velocity.normalize(), Vector3f.UNIT_Y);
@@ -213,7 +218,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                      * state is voided. The most clean solution would be removeAgent(), addAgent() but that has some
                      * overhead as well as possibly messing with the index, on which some 3rd-party code might rely on.
                       */
-                    System.out.println("Resetting Agent because of physics drift");
+                    log.debug("Resetting Agent because of physics drift");
                     DetourUtils.fillFloatArray(crowdAgent.npos, spatialMap[crowdAgent.idx].getWorldTranslation());
                 }
                 break;
@@ -240,19 +245,19 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                 }
 
             } else {
-                System.out.println("not in proximity of " + DetourUtils.createVector3f(crowdAgent.targetPos));
+                log.debug("Crowd Agent i={} not in proximity of {} (Proximity Detection)", crowdAgent.idx, DetourUtils.createVector3f(crowdAgent.targetPos));
                 // @TODO: Stuck detection?
             }
         } else {
             // alternatively let crowd handle that.
             if (vel < 0.01f) { // This happens when the formationHandler is too picky about the position and crowd stops moving.
                 resetMoveTarget(crowdAgent.idx); // does formationTargets[crowdAgent.idx] = null; for us
-                System.out.println("Crowd has decided to stop here.......");
+                log.debug("Crowd has decided to stop here..");
             } else if (vel < 0.1f && formationHandler.isInFormationProximity(newPos, formationTargets[crowdAgent.idx])) {
                 resetMoveTarget(crowdAgent.idx); // does formationTargets[crowdAgent.idx] = null; for us
-                System.out.println("Reached Target");
+                log.debug("CrowdAgent i={} reached target", crowdAgent.idx);
             } else {
-                System.out.println("IS FORMING: "); /*+ SimpleTargetProximityDetector.euclideanDistanceSquared(newPos,
+                log.debug("CrowdAgent i={} is forming!", crowdAgent.idx); /*+ SimpleTargetProximityDetector.euclideanDistanceSquared(newPos,
                         formationTargets[crowdAgent.idx]) + " > " + 0.1f * 0.1f);*/
             }
         }

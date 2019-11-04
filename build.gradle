@@ -20,6 +20,9 @@ dependencies {
     // Engine
     implementation "org.jmonkeyengine:jme3-core:$jmeVersion"
     implementation "org.jmonkeyengine:jme3-bullet:$jmeVersion"
+
+    // Logging
+    compile 'org.slf4j:slf4j-api:1.7.29'
     
     // recast4j
     compile 'com.github.ppiastucki.recast4j:parent:master-SNAPSHOT'
