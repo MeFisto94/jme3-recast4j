@@ -175,7 +175,7 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
     }
 
     protected void applyMovement(org.recast4j.detour.crowd.CrowdAgent crowdAgent, Vector3f newPos, Vector3f velocity) {
-        float vel = velocity.length();
+        float vel = velocity == null ? 0f : velocity.length();
 
         log.debug("crowdAgent i={}, newPos={}, velocity={}[{}]", crowdAgent.idx, newPos, velocity, vel);
 
@@ -204,8 +204,12 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                     return; // Initial "return": Don't even bother with formation or other logic.
                 }
 
-                bcc.setWalkDirection(velocity);
-                bcc.setViewDirection(velocity.normalize());
+                if (velocity != null) {
+                    bcc.setWalkDirection(velocity);
+                    bcc.setViewDirection(velocity.normalize());
+                } else {
+                    bcc.setWalkDirection(Vector3f.ZERO);
+                }
 
                 /* Note: Unfortunately BetterCharacterControl does not expose getPhysicsLocation but it's tied to the
                  * SceneGraph Position
@@ -346,11 +350,14 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
     @Override
     public boolean resetMoveTarget(int idx) {
         formationTargets[idx] = null;
+        CrowdAgent agnt = getAgent(idx);
+        applyMovement(agnt, agnt.getPosition(), null);
         return super.resetMoveTarget(idx);
     }
 
     public boolean resetMoveTarget(CrowdAgent agent) {
         assert agent.crowd == this;
+        applyMovement(agent, agent.getPosition(), null);
         return resetMoveTarget(agent.idx);
     }
 
