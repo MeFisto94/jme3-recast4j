@@ -231,6 +231,10 @@ public class Crowd extends org.recast4j.detour.crowd.Crowd {
                 throw new IllegalArgumentException("Unknown Application Type");
         }
 
+        if (velocity == null) {
+            return; // Bugfix: Don't get caught in an endless loop when this code already triggered a movement-stop
+        }
+
         // If we aren't currently forming.
         if (formationTargets[crowdAgent.idx] == null) {
             // @TODO: Move Proximity Detector into Crowd Agent to allow for custom detectors?
